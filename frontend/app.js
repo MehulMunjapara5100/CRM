@@ -95,8 +95,8 @@ function clearSession() {
 
 function applyRoleVisibility() {
   const role = state.user?.role;
-  $$('.admin-only').forEach((item) => item.classList.toggle('hidden', role !== 'ADMIN'));
-  $$('.staff-admin-only').forEach((item) => item.classList.toggle('hidden', !['ADMIN', 'STAFF'].includes(role)));
+  $$('.admin-only').forEach((item) => item.classList.toggle('role-hidden', role !== 'ADMIN'));
+  $$('.staff-admin-only').forEach((item) => item.classList.toggle('role-hidden', !['ADMIN', 'STAFF'].includes(role)));
   $('#session-role').textContent = state.user ? `${state.user.name} - ${state.user.role}` : 'Operations console';
 }
 
