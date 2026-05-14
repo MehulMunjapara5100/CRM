@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InventoryPro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <section id="auth-screen" class="auth-screen">
+      <div class="auth-hero">
+        <div class="brand-row">
+          <div class="brand-mark">IM</div>
+          <div>
+            <strong>InventoryPro</strong>
+            <span>Cloud-ready stock operations</span>
+          </div>
+        </div>
+        <h1>Control products, stock, orders, and users from one secure workspace.</h1>
+        <p>
+          Login with your seeded admin account, then manage inventory and upload product
+          images through the backend Cloudinary integration.
+        </p>
+        <div class="hero-stats">
+          <span><strong>RBAC</strong> Admin, Staff, Client</span>
+          <span><strong>JWT</strong> Secure sessions</span>
+          <span><strong>Cloud</strong> Product images</span>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button id="login-tab" class="selected" type="button">Login</button>
+          <button id="register-tab" type="button">Register</button>
+        </div>
+
+        <form id="login-form" class="stack-form">
+          <label>
+            Email
+            <input name="email" type="email" value="admin@example.com" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" value="Admin@12345" required />
+          </label>
+          <button class="primary-button full" type="submit">Login</button>
+        </form>
+
+        <form id="register-form" class="stack-form hidden">
+          <label>
+            Name
+            <input name="name" type="text" placeholder="Client name" required />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" placeholder="client@example.com" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" placeholder="Minimum 8 characters" required />
+          </label>
+          <button class="primary-button full" type="submit">Create Client Account</button>
+        </form>
+
+        <p id="auth-message" class="form-message"></p>
+      </div>
+    </section>
+
+    <div id="app-screen" class="app-shell hidden">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand-row">
+          <div class="brand-mark">IM</div>
+          <div>
+            <strong>InventoryPro</strong>
+            <span id="session-role">Operations console</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="dashboard" type="button">Dashboard</button>
+          <button class="nav-item" data-view="products" type="button">Products</button>
+          <button class="nav-item staff-admin-only" data-view="inventory" type="button">Inventory</button>
+          <button class="nav-item" data-view="orders" type="button">Orders</button>
+          <button class="nav-item admin-only" data-view="users" type="button">Users</button>
+        </nav>
+
+        <button id="logout-button" class="ghost-button full" type="button">Logout</button>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p id="today-label" class="eyebrow"></p>
+            <h1 id="page-title">Dashboard</h1>
+          </div>
+          <div class="top-actions">
+            <label class="search" aria-label="Search products">
+              <span aria-hidden="true">Search</span>
+              <input id="search-input" type="search" placeholder="Product name or description" />
+            </label>
+            <button id="refresh-button" class="icon-button" type="button" title="Refresh">R</button>
+          </div>
+        </header>
+
+        <p id="app-message" class="toast hidden"></p>
+
+        <section id="dashboard-view" class="view">
+          <div class="metrics-grid">
+            <article class="metric accent-teal">
+              <span>Users</span>
+              <strong id="metric-users">0</strong>
+              <small>Registered accounts</small>
+            </article>
+            <article class="metric accent-blue">
+              <span>Products</span>
+              <strong id="metric-products">0</strong>
+              <small>Catalog items</small>
+            </article>
+            <article class="metric accent-amber">
+              <span>Low Stock</span>
+              <strong id="metric-low-stock">0</strong>
+              <small>5 units or fewer</small>
+            </article>
+            <article class="metric accent-rose">
+              <span>Revenue</span>
+              <strong id="metric-revenue">0</strong>
+              <small>Completed order total</small>
+            </article>
+          </div>
+
+          <div class="workspace-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Live catalog</p>
+                  <h2>Products</h2>
+                </div>
+                <button class="primary-button admin-only" data-view-button="products" type="button">Add Product</button>
+              </div>
+              <div id="dashboard-products" class="product-table"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Recent movement</p>
+                  <h2>Orders</h2>
+                </div>
+                <button class="ghost-button" data-view-button="orders" type="button">View Orders</button>
+              </div>
+              <div id="dashboard-orders" class="order-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="products-view" class="view hidden">
+          <div class="workspace-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Catalog</p>
+                  <h2>Products</h2>
+                </div>
+              </div>
+              <div id="products-table" class="product-table"></div>
+            </section>
+
+            <section class="panel admin-only">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Cloud images</p>
+                  <h2 id="product-form-title">Create Product</h2>
+                </div>
+              </div>
+              <form id="product-form" class="stack-form">
+                <label>
+                  Title
+                  <input name="title" type="text" required />
+                </label>
+                <label>
+                  Description
+                  <textarea name="description" rows="4" required></textarea>
+                </label>
+                <div class="two-cols">
+                  <label>
+                    Price
+                    <input name="price" type="number" min="0.01" step="0.01" required />
+                  </label>
+                  <label>
+                    Stock
+                    <input name="stock" type="number" min="0" value="0" required />
+                  </label>
+                </div>
+                <label>
+                  Images
+                  <input name="images" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+                </label>
+                <label>
+                  Status
+                  <select name="isActive">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </label>
+                <small>Images are sent to the backend, then stored in Cloudinary when your Cloudinary env keys are set.</small>
+                <div class="form-actions">
+                  <button id="product-submit-button" class="primary-button full" type="submit">Create Product</button>
+                  <button id="product-cancel-button" class="ghost-button full hidden" type="button">Cancel Edit</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section id="inventory-view" class="view hidden staff-admin-only">
+          <div class="workspace-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Stock control</p>
+                  <h2>Add Stock</h2>
+                </div>
+              </div>
+              <form id="stock-form" class="stack-form">
+                <label>
+                  Product
+                  <select name="productId" required></select>
+                </label>
+                <label>
+                  Quantity
+                  <input name="quantity" type="number" min="1" value="1" required />
+                </label>
+                <label>
+                  Note
+                  <input name="note" type="text" placeholder="Supplier delivery" />
+                </label>
+                <button class="primary-button full" type="submit">Update Inventory</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Audit trail</p>
+                  <h2>Inventory Logs</h2>
+                </div>
+              </div>
+              <div id="inventory-logs" class="log-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="orders-view" class="view hidden">
+          <div class="workspace-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Sales</p>
+                  <h2>Orders</h2>
+                </div>
+              </div>
+              <div id="orders-list" class="order-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Checkout</p>
+                  <h2>Create Order</h2>
+                </div>
+              </div>
+              <form id="order-form" class="stack-form">
+                <label>
+                  Product
+                  <select name="productId" required></select>
+                </label>
+                <label>
+                  Quantity
+                  <input name="quantity" type="number" min="1" value="1" required />
+                </label>
+                <button class="primary-button full" type="submit">Place Order</button>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section id="users-view" class="view hidden">
+          <div class="workspace-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Admin</p>
+                  <h2>Users</h2>
+                </div>
+              </div>
+              <div id="users-list" class="user-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Access</p>
+                  <h2>Create User</h2>
+                </div>
+              </div>
+              <form id="user-form" class="stack-form">
+                <label>
+                  Name
+                  <input name="name" type="text" required />
+                </label>
+                <label>
+                  Email
+                  <input name="email" type="email" required />
+                </label>
+                <label>
+                  Password
+                  <input name="password" type="password" required />
+                </label>
+                <label>
+                  Role
+                  <select name="role">
+                    <option value="ADMIN">Admin</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="CLIENT">Client</option>
+                  </select>
+                </label>
+                <button class="primary-button full" type="submit">Create User</button>
+              </form>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
