@@ -184,10 +184,12 @@ Admin only:
 
 ## Production Notes
 
-- For production, switch Prisma to your production database provider, use a managed database with backups enabled, and run reviewed migrations.
+- Vercel serves this project from the deployed URL. The frontend automatically calls `/api/v1` on the same Vercel domain; `localhost:5000` is only used when opening the frontend locally.
+- Vercel serverless functions do not persist uploaded files on local disk. Set these Vercel environment variables before uploading product images: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
+- Existing database records with `/uploads/...` image URLs were created with local disk storage and cannot be served from Vercel after deployment. Re-upload those product images after Cloudinary is configured.
+- The included SQLite setup is for demo deployments only. For real production data, switch Prisma to a managed production database with backups enabled and run reviewed migrations.
 - Set a long random `JWT_SECRET`.
 - Restrict `CORS_ORIGIN` to trusted frontend origins.
-- Configure Cloudinary credentials before uploading product images.
 - Run `npm run db:local:init` for the local SQLite database.
 - Use reviewed Prisma migrations for production deployments.
 - Put the API behind HTTPS and a process manager such as PM2, Docker, or your platform runtime.

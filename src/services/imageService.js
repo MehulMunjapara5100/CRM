@@ -4,6 +4,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const env = require('../config/env');
 const { cloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
+const ApiError = require('../utils/ApiError');
 
 const uploadDir = path.join(__dirname, '..', '..', 'uploads', 'products');
 
@@ -47,6 +48,13 @@ async function saveLocalImage(file) {
 }
 
 async function uploadImages(files = []) {
+  if (files.length && env.NODE_ENV === 'production' && !isCloudinaryConfigured) {
+    throw new ApiError(
+      503,
+      'Image uploads need Cloudinary on Vercel. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel environment variables.'
+    );
+  }
+
   const upload = isCloudinaryConfigured ? uploadBuffer : saveLocalImage;
   return Promise.all(files.map(upload));
 }

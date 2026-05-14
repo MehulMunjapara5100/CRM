@@ -144,8 +144,19 @@ function escapeHtml(value) {
 function productImageUrl(product) {
   const url = product.images?.[0]?.url;
   if (!url) return PLACEHOLDER_IMAGE;
+  if (window.location.hostname !== 'localhost' && url.startsWith('/uploads/')) {
+    return PLACEHOLDER_IMAGE;
+  }
   if (url.startsWith('/')) return `${API_ORIGIN}${url}`;
   return url;
+}
+
+function applyImageFallbacks(root) {
+  root.querySelectorAll('img[data-fallback-src]').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.src = image.dataset.fallbackSrc;
+    }, { once: true });
+  });
 }
 
 function setProductFormMode(product = null) {
@@ -205,7 +216,7 @@ function renderProducts(targetSelector, products = state.products) {
       return `
         <div class="table-row ${canManageProducts ? 'with-actions' : ''}">
           <span class="product-cell">
-            <img src="${escapeHtml(image)}" alt="${title}" />
+            <img src="${escapeHtml(image)}" alt="${title}" loading="lazy" data-fallback-src="${PLACEHOLDER_IMAGE}" />
             <span>
               <strong>${title}</strong>
               <small>${description}${product.isActive === false ? ' - Inactive' : ''}</small>
@@ -224,6 +235,7 @@ function renderProducts(targetSelector, products = state.products) {
       `;
     }).join('')}
   `;
+  applyImageFallbacks(target);
 }
 
 function renderProductSelects() {
