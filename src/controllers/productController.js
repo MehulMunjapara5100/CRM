@@ -1,7 +1,13 @@
 const prisma = require('../config/prisma');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
-const { uploadImages } = require('../services/imageService');
+const { deleteImages, uploadImages } = require('../services/imageService');
+
+const productInclude = {
+  images: {
+    orderBy: { createdAt: 'desc' }
+  }
+};
 
 function serializeProduct(product) {
   return {
@@ -27,7 +33,7 @@ const listProducts = asyncHandler(async (req, res) => {
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { images: true },
+      include: productInclude,
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit
@@ -45,7 +51,7 @@ const listProducts = asyncHandler(async (req, res) => {
 const getProduct = asyncHandler(async (req, res) => {
   const product = await prisma.product.findUniqueOrThrow({
     where: { id: req.validated.params.id },
-    include: { images: true }
+    include: productInclude
   });
 
   res.json({
@@ -63,7 +69,7 @@ const createProduct = asyncHandler(async (req, res) => {
         create: uploadedImages
       }
     },
-    include: { images: true }
+    include: productInclude
   });
 
   res.status(201).json({
@@ -79,20 +85,38 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'At least one product field or image is required');
   }
 
-  const product = await prisma.product.update({
-    where: { id: req.validated.params.id },
-    data: {
-      ...req.validated.body,
-      ...(uploadedImages.length
-        ? {
-            images: {
-              create: uploadedImages
+  let oldImages = [];
+
+  const product = await prisma.$transaction(async (tx) => {
+    if (uploadedImages.length) {
+      oldImages = await tx.productImage.findMany({
+        where: { productId: req.validated.params.id }
+      });
+
+      await tx.productImage.deleteMany({
+        where: { productId: req.validated.params.id }
+      });
+    }
+
+    return tx.product.update({
+      where: { id: req.validated.params.id },
+      data: {
+        ...req.validated.body,
+        ...(uploadedImages.length
+          ? {
+              images: {
+                create: uploadedImages
+              }
             }
-          }
-        : {})
-    },
-    include: { images: true }
+          : {})
+      },
+      include: productInclude
+    });
   });
+
+  if (uploadedImages.length) {
+    await deleteImages(oldImages);
+  }
 
   res.json({
     success: true,

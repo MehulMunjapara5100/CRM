@@ -47,6 +47,24 @@ async function saveLocalImage(file) {
   };
 }
 
+async function deleteImage(image) {
+  if (!image?.publicId) return;
+
+  if (image.publicId.startsWith('local:')) {
+    const filename = image.publicId.replace('local:', '');
+    await fs.rm(path.join(uploadDir, filename), { force: true }).catch(() => {});
+    return;
+  }
+
+  if (isCloudinaryConfigured) {
+    await cloudinary.uploader.destroy(image.publicId).catch(() => {});
+  }
+}
+
+async function deleteImages(images = []) {
+  await Promise.all(images.map(deleteImage));
+}
+
 async function uploadImages(files = []) {
   if (files.length && env.NODE_ENV === 'production' && !isCloudinaryConfigured) {
     throw new ApiError(
@@ -60,5 +78,6 @@ async function uploadImages(files = []) {
 }
 
 module.exports = {
+  deleteImages,
   uploadImages
 };
